@@ -12,14 +12,16 @@
  * functions (api/*.js) and on a plain Node http server (node-server.js).
  */
 import { createHash } from "node:crypto";
+import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { JettyApiClient, DEFAULT_API_URL } from "jetty-mcp-server/api-client";
 import { JETTY_TOOLS, jsonResult } from "jetty-mcp-server/tool-definitions";
-import catalogPackage from "jetty-mcp-server/package.json" with { type: "json" };
+
+const require = createRequire(import.meta.url);
 
 /** Version of the tool catalog this host serves (the jetty-mcp-server release). */
-export const CATALOG_VERSION = catalogPackage.version;
+export const CATALOG_VERSION = require("jetty-mcp-server/package.json").version;
 
 /** The authorization server MCP clients are sent to (RFC 9728). */
 export const AUTHORIZATION_SERVER = "https://clerk.jetty.io";
