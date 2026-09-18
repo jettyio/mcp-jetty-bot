@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jetty MCP</title>
+<meta name="description" content="Hosted MCP server for Jetty: run, schedule and inspect runbooks from any MCP client over Streamable HTTP.">
+<link rel="icon" href="https://jetty.io/pelly-pixel.png">
+<style>
+  :root { color-scheme: light dark; --fg: #1b1b1f; --muted: #5c5f66; --bg: #fbfaf7; --card: #ffffff; --line: #e3e0d8; --accent: #2255c4; }
+  @media (prefers-color-scheme: dark) { :root { --fg: #ecebe6; --muted: #a2a4ab; --bg: #141416; --card: #1d1d21; --line: #2c2c31; --accent: #7ea3ff; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 20px 64px; }
+  h1 { font-size: 30px; margin: 0 0 6px; display: flex; align-items: center; gap: 12px; }
+  h1 img { width: 40px; height: 40px; image-rendering: pixelated; }
+  h2 { font-size: 19px; margin: 36px 0 10px; }
+  p.lede { color: var(--muted); margin: 0 0 24px; }
+  code, pre { font: 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  code { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  pre { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 10px 0 0; }
+  pre code { background: none; border: 0; padding: 0; }
+  a { color: var(--accent); }
+  .facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
+  .facts dt { color: var(--muted); }
+  .facts dd { margin: 0; }
+  .tools { columns: 2; column-gap: 24px; padding-left: 20px; margin: 8px 0 0; }
+  .tools li { break-inside: avoid; }
+  .note { border-left: 3px solid var(--accent); padding: 8px 14px; background: var(--card); border-radius: 0 8px 8px 0; margin-top: 12px; }
+  @media (max-width: 520px) { .tools { columns: 1; } .facts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1><img src="https://jetty.io/pelly-pixel.png" alt="">Jetty MCP</h1>
+  <p class="lede">The hosted <a href="https://modelcontextprotocol.io">Model Context Protocol</a> server for <a href="https://jetty.io">Jetty</a>. Deploy, run, schedule and inspect runbooks from any MCP client, with nothing to install.</p>
+
+  <dl class="facts">
+    <dt>Endpoint</dt><dd><code>https://mcp.jetty.bot/mcp</code></dd>
+    <dt>Transport</dt><dd>Streamable HTTP, stateless (no sessions, JSON responses)</dd>
+    <dt>Auth</dt><dd><code>Authorization: Bearer &lt;Jetty API key&gt;</code> &mdash; <a href="https://jetty.io/auth.md">how to get a key</a></dd>
+    <dt>Metadata</dt><dd><a href="/.well-known/oauth-protected-resource/mcp">/.well-known/oauth-protected-resource/mcp</a></dd>
+    <dt>Source</dt><dd><a href="https://github.com/jettyio/jettyio-skills/tree/main/mcp-server">jetty-mcp-server</a> (the same tools as the local <code>npx</code> server)</dd>
+  </dl>
+
+  <h2>Claude Code</h2>
+  <pre><code>claude mcp add --transport http jetty https://mcp.jetty.bot/mcp \
+  --header "Authorization: Bearer mlc_…"</code></pre>
+
+  <h2>Cursor, VS Code, Windsurf and other JSON configs</h2>
+  <pre><code>{
+  "mcpServers": {
+    "jetty": {
+      "url": "https://mcp.jetty.bot/mcp",
+      "headers": { "Authorization": "Bearer mlc_…" }
+    }
+  }
+}</code></pre>
+
+  <h2>curl</h2>
+  <pre><code>curl -sS https://mcp.jetty.bot/mcp \
+  -H "Authorization: Bearer mlc_…" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'</code></pre>
+
+  <div class="note">Requests are scoped to the key's collection. Clients that can only sign in with OAuth (for example the Claude.ai and ChatGPT connector galleries) are not supported yet; use a client that sends an <code>Authorization</code> header.</div>
+
+  <h2>Tools</h2>
+  <p>Every tool from <code>jetty-mcp-server</code> except <code>run-workflow-sync</code>, which blocks for the length of a run. Start a run with <code>run-workflow</code> and poll <code>get-trajectory</code>.</p>
+  <ul class="tools">
+    <li>list-collections</li><li>get-collection</li>
+    <li>list-tasks</li><li>get-task</li><li>create-task</li><li>update-task</li>
+    <li>run-workflow</li><li>list-trajectories</li><li>get-trajectory</li><li>get-stats</li><li>add-label</li>
+    <li>list-step-templates</li><li>get-step-template</li>
+    <li>check-secrets</li><li>set-environment-vars</li>
+    <li>get-trial-status</li><li>activate-trial</li>
+    <li>list-routines</li><li>get-routine</li><li>create-routine</li><li>update-routine</li><li>delete-routine</li>
+    <li>pause-routine</li><li>resume-routine</li><li>run-routine-now</li><li>list-routine-runs</li>
+  </ul>
+
+  <h2>Docs</h2>
+  <p>Tool reference and the local stdio server: <a href="https://jetty.io/docs/integrations/mcp-server">jetty.io/docs/integrations/mcp-server</a>. API reference: <a href="https://jetty.io/docs/reference/api">jetty.io/docs/reference/api</a>.</p>
+</main>
+</body>
+</html>
